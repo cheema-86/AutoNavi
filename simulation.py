@@ -4,17 +4,18 @@ import tracks
 
 # pygame initialization
 pygame.init()
-screen = pygame.display.set_mode((1280, 720))
-clock = pygame.time.Clock()
-running = True
+screen = pygame.display.set_mode((1280, 720)) # set screen size
+clock = pygame.time.Clock() # need this to limit FPS
+running = True 
 
+# car image
 IMG = pygame.image.load("assets/car.png").convert_alpha()
-IMG = pygame.transform.scale(IMG, (50, 25))
+IMG = pygame.transform.scale(IMG, (50, 25)) # resize image
 
-
+#this is our car
 class Vehicle(pygame.sprite.Sprite):
     def __init__(self):
-        super().__init__()
+        super().__init__() # initialize Sprite
 
         self.image = IMG
         self.rect = self.image.get_rect()
@@ -26,13 +27,12 @@ class Vehicle(pygame.sprite.Sprite):
         self.x, self.y = (100,100)
         self.acceleration = 0.2
 
-    def input(self):
+    def input(self): # get user input
         keys = pygame.key.get_pressed()
         if keys[pygame.K_UP]:
             self.accelerate()
         elif keys[pygame.K_DOWN]:
             self.brake()
-
         if keys[pygame.K_LEFT]:
             self.turn_left()
         elif keys[pygame.K_RIGHT]:
@@ -40,44 +40,45 @@ class Vehicle(pygame.sprite.Sprite):
 
     def accelerate(self):
         self.vel += self.acceleration
-        self.vel = max(-self.max_vel, min(self.vel, self.max_vel))
+        self.vel = max(-self.max_vel, min(self.vel, self.max_vel)) # weird janky way to limit velocity
 
     def brake(self):
         self.vel -= self.acceleration
-        self.vel = max(-self.max_vel, min(self.vel, self.max_vel))
+        self.vel = max(-self.max_vel, min(self.vel, self.max_vel)) # weird janky way to limit velocity
 
     def turn_right(self):
         if self.vel > 1:
             self.angle += self.rotation_vel
-        elif self.vel < -1:
+        elif self.vel < -1: # for some reason I need to reverse the rotation when going backwards
             self.angle -= self.rotation_vel*0.5
 
     def turn_left(self):
         if self.vel > 1:
             self.angle -= self.rotation_vel
-        elif self.vel < -1:
+        elif self.vel < -1: # for some reason I need to reverse the rotation when going backwards
             self.angle += self.rotation_vel*0.5
 
-    def update(self, barriers):
+    def update(self, barriers): # needed to pass on the barriers for collision detection
         self.input()
         self.vel *= 0.95 # friction
 
-        self.x += self.vel * math.cos(math.radians(self.angle))
+        self.x += self.vel * math.cos(math.radians(self.angle)) # big math stuff
         self.y += self.vel * math.sin(math.radians(self.angle))
 
-        self.rect.center = (self.x, self.y)
-        self.image = pygame.transform.rotate(IMG, -self.angle)
+        self.rect.center = (self.x, self.y) # this sets the location of the car
+        self.image = pygame.transform.rotate(IMG, -self.angle) # puts the image, idk why but I needed the negative angle
 
-        for barrier in barriers:
+        for barrier in barriers: # this is the collision detection
             if pygame.sprite.collide_rect(self, barrier):
                 self.vel = -self.vel*0.5
                 break
 
 
+# this is our barriers
 class Barrier(pygame.sprite.Sprite):
     def __init__(self, x, y, length, rotation):
         super().__init__()
-        if rotation == 0:
+        if rotation == 0: # horizontal or vertical
             self.length = length
             self.width = 10
         else:
@@ -89,21 +90,22 @@ class Barrier(pygame.sprite.Sprite):
         self.rect.topleft = (x,y)
 
 
-
+# sprite definitions
 car = pygame.sprite.GroupSingle(Vehicle())
 track = pygame.sprite.Group()
 
+# replace with a make_track function
 for barrier in tracks.maze:
     track.add(Barrier(*barrier))
 
-
+#main loop
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
     screen.fill("black") 
 
-    car.update(track)
+    car.update(track) # pass on the barriers to the car
     car.draw(screen)
     track.draw(screen)
 
