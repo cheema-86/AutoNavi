@@ -12,6 +12,11 @@ running = True
 IMG = pygame.image.load("assets/car.png").convert_alpha()
 IMG = pygame.transform.scale(IMG, (50, 25)) # resize image
 
+#vision won't work unless I do this
+VIS = pygame.Surface((100, 5))
+VIS.fill("red")
+
+
 #this is our car
 class Vehicle(pygame.sprite.Sprite):
     def __init__(self):
@@ -74,6 +79,22 @@ class Vehicle(pygame.sprite.Sprite):
                 break
 
 
+class Vision(pygame.sprite.Sprite): #wanda ded
+    def __init__(self, x, y, angle):
+        super().__init__()
+        self.image = VIS
+        self.rect = self.image.get_rect()
+        self.rect.midleft = (x,y)
+        self.angle = angle
+
+    def update(self, car):
+        self.x = car.x
+        self.y = car.y
+        self.angle = car.angle
+        self.rect.midleft = (self.x, self.y)
+        self.image = pygame.transform.rotate(VIS, -self.angle)
+
+
 # this is our barriers
 class Barrier(pygame.sprite.Sprite):
     def __init__(self, x, y, length, rotation):
@@ -93,6 +114,9 @@ class Barrier(pygame.sprite.Sprite):
 # sprite definitions
 car = pygame.sprite.GroupSingle(Vehicle())
 track = pygame.sprite.Group()
+sight = pygame.sprite.Group()
+
+sight.add(Vision(car.sprite.x, car.sprite.y, car.sprite.angle))
 
 # replace with a make_track function
 for barrier in tracks.maze:
@@ -107,6 +131,8 @@ while running:
 
     car.update(track) # pass on the barriers to the car
     car.draw(screen)
+    sight.update(car.sprite)
+    sight.draw(screen)
     track.draw(screen)
 
 
