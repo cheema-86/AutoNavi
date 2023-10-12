@@ -8,7 +8,6 @@ screen = pygame.display.set_mode((1280, 720))
 clock = pygame.time.Clock()
 running = True
 
-
 IMG = pygame.image.load("assets/car.png").convert_alpha()
 IMG = pygame.transform.scale(IMG, (50, 25))
 
@@ -48,23 +47,31 @@ class Vehicle(pygame.sprite.Sprite):
         self.vel = max(-self.max_vel, min(self.vel, self.max_vel))
 
     def turn_right(self):
-        if -1 < self.vel > 1:
+        if self.vel > 1:
             self.angle += self.rotation_vel
+        elif self.vel < -1:
+            self.angle -= self.rotation_vel*0.5
 
     def turn_left(self):
-        if -1 < self.vel > 1:
+        if self.vel > 1:
             self.angle -= self.rotation_vel
+        elif self.vel < -1:
+            self.angle += self.rotation_vel*0.5
 
-    def update(self):
+    def update(self, barriers):
         self.input()
         self.vel *= 0.95 # friction
-
 
         self.x += self.vel * math.cos(math.radians(self.angle))
         self.y += self.vel * math.sin(math.radians(self.angle))
 
         self.rect.center = (self.x, self.y)
         self.image = pygame.transform.rotate(IMG, -self.angle)
+
+        for barrier in barriers:
+            if pygame.sprite.collide_rect(self, barrier):
+                self.vel = -self.vel*0.5
+                break
 
 
 class Barrier(pygame.sprite.Sprite):
@@ -79,17 +86,15 @@ class Barrier(pygame.sprite.Sprite):
         self.image = pygame.Surface((self.length, self.width))
         self.image.fill("white")
         self.rect = self.image.get_rect()
-        self.rect.center = (x,y)
+        self.rect.topleft = (x,y)
 
 
 
 car = pygame.sprite.GroupSingle(Vehicle())
 track = pygame.sprite.Group()
 
-track.add(Barrier(100, 50, 1000, 0))
-track.add(Barrier(50, 100, 1000, 1))
-track.add(Barrier(200, 500, 1000, 0))
-track.add(Barrier(500, 200, 1000, 1))
+for barrier in tracks.maze:
+    track.add(Barrier(*barrier))
 
 
 while running:
@@ -98,9 +103,10 @@ while running:
             running = False
     screen.fill("black") 
 
-    car.update()
+    car.update(track)
     car.draw(screen)
     track.draw(screen)
+
 
     pygame.display.flip() #render frame
     clock.tick(60)  # limits FPS to 60
