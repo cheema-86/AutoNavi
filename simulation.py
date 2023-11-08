@@ -12,10 +12,6 @@ running = True
 IMG = pygame.image.load("assets/car.png").convert_alpha()
 IMG = pygame.transform.scale(IMG, (50, 25)) # resize image
 
-#vision won't work unless I do this
-VIS = pygame.Surface((100, 5))
-VIS.fill("red")
-
 
 #this is our car
 class Vehicle(pygame.sprite.Sprite):
@@ -75,24 +71,33 @@ class Vehicle(pygame.sprite.Sprite):
 
         for barrier in barriers: # this is the collision detection
             if pygame.sprite.collide_rect(self, barrier):
-                self.vel = -self.vel*0.5
+                barrier.image.fill("red")
+                # This is where you get game over
                 break
 
 
 class Vision(pygame.sprite.Sprite): #wanda ded
-    def __init__(self, x, y, angle):
+    def __init__(self, car, offset):
         super().__init__()
-        self.image = VIS
+        self.image = pygame.Surface((10, 10))
+        self.image.fill("green")
         self.rect = self.image.get_rect()
-        self.rect.midleft = (x,y)
-        self.angle = angle
-
-    def update(self, car):
-        self.x = car.x
-        self.y = car.y
+        self.rect.center = (car.x,car.y)
         self.angle = car.angle
-        self.rect.midleft = (self.x, self.y)
-        self.image = pygame.transform.rotate(VIS, -self.angle)
+        self.offset = offset
+
+    def update(self, car, barriers):
+        self.x = car.x + math.cos(math.radians(car.angle+self.offset)) * 70
+        self.y = car.y + math.sin(math.radians(car.angle+self.offset)) * 70
+        self.rect.center = (self.x, self.y)
+
+        for barrier in barriers: # this is the collision detection
+            if pygame.sprite.collide_rect(self, barrier):
+                self.image.fill("red")
+                break
+        else:
+            self.image.fill("green")
+
 
 
 # this is our barriers
@@ -116,7 +121,13 @@ car = pygame.sprite.GroupSingle(Vehicle())
 track = pygame.sprite.Group()
 sight = pygame.sprite.Group()
 
-sight.add(Vision(car.sprite.x, car.sprite.y, car.sprite.angle))
+# vision dots
+sight.add(Vision(car.sprite, 0))
+sight.add(Vision(car.sprite, 45))
+sight.add(Vision(car.sprite, -45))
+sight.add(Vision(car.sprite, 90))
+sight.add(Vision(car.sprite, -90))
+sight.add(Vision(car.sprite, 180))
 
 # replace with a make_track function
 for barrier in tracks.maze:
@@ -131,7 +142,7 @@ while running:
 
     car.update(track) # pass on the barriers to the car
     car.draw(screen)
-    sight.update(car.sprite)
+    sight.update(car.sprite, track)
     sight.draw(screen)
     track.draw(screen)
 
