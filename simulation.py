@@ -56,6 +56,7 @@ class SimAI:
         self.sight.update(self.car.sprite, self.track)
         self.sight.draw(self.screen)
         self.track.draw(self.screen)
+        self.rewards.draw(self.screen)
 
         # ml parameters
         reward = 0
@@ -149,17 +150,24 @@ class Vision(pygame.sprite.Sprite): #wanda ded
         self.angle = car.angle
         self.offset = offset
 
+    def isColliding(self, barriers):
+        for barrier in barriers: # this is the collision detection
+            if pygame.sprite.collide_rect(self, barrier):
+                return True
+        else:
+            return False
+
     def update(self, car, barriers):
         self.x = car.x + math.cos(math.radians(car.angle+self.offset)) * 70
         self.y = car.y + math.sin(math.radians(car.angle+self.offset)) * 70
         self.rect.center = (self.x, self.y)
 
-        for barrier in barriers: # this is the collision detection
-            if pygame.sprite.collide_rect(self, barrier):
-                self.image.fill("red")
-                break
+        if self.isColliding(barriers):
+            self.image.fill("red")
         else:
             self.image.fill("green")
+
+        
 
 
 
