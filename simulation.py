@@ -43,6 +43,12 @@ class SimAI:
         self.sight.add(Vision(car.sprite, 90))
         self.sight.add(Vision(car.sprite, -90))
         self.sight.add(Vision(car.sprite, 180))
+        self.sight.add(Vision(car.sprite, 0, 30))
+        self.sight.add(Vision(car.sprite, 45, 30))
+        self.sight.add(Vision(car.sprite, -45, 30))
+        self.sight.add(Vision(car.sprite, 90, 30))
+        self.sight.add(Vision(car.sprite, -90, 30))
+        self.sight.add(Vision(car.sprite, 180, 30))
 
     def play_step(self,action):
         for event in pygame.event.get():
@@ -64,20 +70,20 @@ class SimAI:
 
         # collision detection
         for barrier in self.track: # this is the collision detection
-            if pygame.sprite.collide_rect(self, barrier):
+            if pygame.sprite.collide_rect(self.car.sprite, barrier):
                 barrier.image.fill("red")
                 game_over = True
                 reward = -10
                 return reward, game_over, self.score
             
         for gate in self.rewards:
-            if pygame.sprite.collide_rect(self, gate):
+            if pygame.sprite.collide_rect(self.car.sprite, gate):
                 self.score += 1
                 reward = 10
                 gate.kill()
 
         pygame.display.flip() #render frame
-        self.clock.tick(60)  # limits FPS to 60
+        self.clock.tick(240)  # limits FPS to 60
 
         return reward, game_over, self.score
 
@@ -93,8 +99,8 @@ class Vehicle(pygame.sprite.Sprite):
         self.max_vel = 20
         self.vel = 0
         self.rotation_vel = 3
-        self.angle = 0
-        self.x, self.y = (100,100)
+        self.angle = 90
+        self.x, self.y = (150,100)
         self.acceleration = 0.2
 
     def input(self, action): # get user input
@@ -141,7 +147,7 @@ class Vehicle(pygame.sprite.Sprite):
 
 
 class Vision(pygame.sprite.Sprite): #wanda ded
-    def __init__(self, car, offset):
+    def __init__(self, car, offset, distance=70):
         super().__init__()
         self.image = pygame.Surface((10, 10))
         self.image.fill("green")
@@ -149,6 +155,7 @@ class Vision(pygame.sprite.Sprite): #wanda ded
         self.rect.center = (car.x,car.y)
         self.angle = car.angle
         self.offset = offset
+        self.distance = distance
 
     def isColliding(self, barriers):
         for barrier in barriers: # this is the collision detection
@@ -158,8 +165,8 @@ class Vision(pygame.sprite.Sprite): #wanda ded
             return False
 
     def update(self, car, barriers):
-        self.x = car.x + math.cos(math.radians(car.angle+self.offset)) * 70
-        self.y = car.y + math.sin(math.radians(car.angle+self.offset)) * 70
+        self.x = car.x + math.cos(math.radians(car.angle+self.offset)) * self.distance
+        self.y = car.y + math.sin(math.radians(car.angle+self.offset)) * self.distance
         self.rect.center = (self.x, self.y)
 
         if self.isColliding(barriers):
