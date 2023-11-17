@@ -27,13 +27,14 @@ class SimAI:
         self.add_sight(self.car)
 
         # replace with a make_track function
-        for barrier in tracks.maze:
+        for barrier in tracks.easy:
             self.track.add(Barrier(*barrier))   
         
-        for gate in tracks.mazeR:
+        for gate in tracks.easyR:
             self.rewards.add(Barrier(*gate, color="green")) 
 
         self.score = 0
+        self.frame_count = 0
 
     def add_sight(self,car): 
         # vision dots
@@ -67,20 +68,33 @@ class SimAI:
         # ml parameters
         reward = 0
         game_over = False
+        self.frame_count += 1
 
         # collision detection
         for barrier in self.track: # this is the collision detection
             if pygame.sprite.collide_rect(self.car.sprite, barrier):
                 barrier.image.fill("red")
                 game_over = True
-                reward = -10
+                reward = -50
                 return reward, game_over, self.score
             
         for gate in self.rewards:
             if pygame.sprite.collide_rect(self.car.sprite, gate):
                 self.score += 1
+                self.frame_count = 0
                 reward = 10
                 gate.kill()
+                if len(self.rewards) == 0:
+                    game_over = True
+                    reward = 100
+                    self.score += 2
+                    return reward, game_over, self.score
+                
+        # out of time
+        if self.frame_count > 1000:
+            game_over = True
+            reward = -10
+            return reward, game_over, self.score
 
         pygame.display.flip() #render frame
         self.clock.tick(240)  # limits FPS to 60
@@ -99,7 +113,7 @@ class Vehicle(pygame.sprite.Sprite):
         self.max_vel = 20
         self.vel = 0
         self.rotation_vel = 3
-        self.angle = 90
+        self.angle = 0
         self.x, self.y = (150,100)
         self.acceleration = 0.2
 
