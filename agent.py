@@ -66,7 +66,16 @@ class Agent:
         else:
             state0 = torch.tensor(state, dtype=torch.float)
             prediction = self.model(state0)
-            move = torch.argmax(prediction).item()
+            moves = torch.topk(prediction, 2).indices.tolist()
+            if moves == [0,1]:
+                moves = [0]
+            elif moves == [2,3]:
+                moves = [2]
+            elif moves == [3,2]:
+                moves = [3]
+
+            for move in moves:
+                final_move[move] = 1
 
         return final_move
 
